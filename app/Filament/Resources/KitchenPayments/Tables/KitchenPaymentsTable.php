@@ -63,7 +63,7 @@ class KitchenPaymentsTable
                 //
             ])
             ->recordActions([
-                EditAction::make(),
+                // التعديل مغلق - الدفعات لا يمكن تعديلها
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
