@@ -90,7 +90,8 @@ class KitchenInvoicesTable
             ])
             ->recordActions([
                 EditAction::make()
-                    ->modal(),
+                    ->modal()
+                    ->modalWidth('7xl'),
                 DeleteAction::make()
                     ->before(function ($record, DeleteAction $action) {
                         if ($record->allocations()->count() > 0) {
