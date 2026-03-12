@@ -22,7 +22,7 @@ use App\Filament\Widgets\InvoicesChart;
 use App\Filament\Widgets\LatestSubscriptionsTable;
 use App\Filament\Widgets\StatsOverview;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
-use Caresome\FilamentNeobrutalism\NeobrutalismeTheme;
+//use Caresome\FilamentNeobrutalism\NeobrutalismeTheme;
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
@@ -38,7 +38,7 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Blue,
             ])
             ->plugins([
-                NeobrutalismeTheme::make(),
+                //NeobrutalismeTheme::make(),
                 BreezyCore::make()
                     ->myProfile(
                         shouldRegisterUserMenu: true,
