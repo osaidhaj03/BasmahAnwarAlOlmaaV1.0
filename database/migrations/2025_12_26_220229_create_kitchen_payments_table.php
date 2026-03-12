@@ -18,7 +18,7 @@ return new class extends Migration
             $table->decimal('amount', 10, 2); // المبلغ المدفوع
             $table->date('payment_date'); // تاريخ الدفع
             $table->foreignId('collected_by')->nullable()->constrained('users')->onDelete('set null'); // المحصّل
-            $table->enum('payment_method', ['cash', 'bank_transfer'])->default('cash'); // طريقة الدفع
+            $table->enum('payment_method', ['cash', 'bank_transfer', 'credit_balance'])->default('cash'); // طريقة الدفع
             $table->text('notes')->nullable(); // ملاحظات
             $table->timestamps();
 

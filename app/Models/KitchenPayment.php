@@ -25,6 +25,18 @@ class KitchenPayment extends Model
         'payment_date' => 'date',
     ];
 
+    /**
+     * Payment method enumeration
+     * - cash: نقد
+     * - bank_transfer: تحويل بنكي
+     * - credit_balance: خصم من الرصيد المتاح
+     */
+    public const PAYMENT_METHODS = [
+        'cash' => 'نقد',
+        'bank_transfer' => 'تحويل بنكي',
+        'credit_balance' => 'خصم من الرصيد المتاح',
+    ];
+
     // العلاقات
 
     /**
