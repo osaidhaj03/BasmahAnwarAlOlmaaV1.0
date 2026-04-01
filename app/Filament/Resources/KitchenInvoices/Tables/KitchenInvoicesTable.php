@@ -115,6 +115,29 @@ class KitchenInvoicesTable
             ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    BulkAction::make('change_amount')
+                        ->label('تغيير القيمة')
+                        ->icon('heroicon-o-currency-dollar')
+                        ->form([
+                            \Filament\Forms\Components\TextInput::make('new_amount')
+                                ->label('القيمة الجديدة (JOD)')
+                                ->numeric()
+                                ->required()
+                                ->minValue(0),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $records->each(function ($record) use ($data) {
+                                $record->update(['amount' => $data['new_amount']]);
+                                $record->updatePaymentStatus();
+                            });
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->title('تم التعديل بنجاح')
+                                ->body('تم تغيير قيمة ' . $records->count() . ' فاتورة/فواتير.')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     BulkAction::make('calculate_total')
                         ->label('حساب المجموع')
                         ->icon('heroicon-o-calculator')
