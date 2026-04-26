@@ -53,7 +53,7 @@ class KitchenSubscriptionForm
                             ->required()
                             ->createOptionForm([
                                 TextInput::make('name')
-                                    ->label('اسم المطبخ')
+                                    ->label('اسم المطبخخ')
                                     ->required()
                                     ->maxLength(255),
                                 TextInput::make('location')
