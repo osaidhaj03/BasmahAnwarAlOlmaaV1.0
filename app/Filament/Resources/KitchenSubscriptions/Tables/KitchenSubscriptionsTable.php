@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\KitchenSubscriptions\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
