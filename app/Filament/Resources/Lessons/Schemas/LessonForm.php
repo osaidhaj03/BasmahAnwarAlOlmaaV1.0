@@ -1,168 +1,87 @@
 <?php
 
-namespace App\Filament\Resources\Lessons\Schemas;
+namespace App\Filament\Resources\KitchenSubscriptions\Tables;
 
-use App\Models\LessonSection;
-use App\Models\User;
-use Filament\Forms\Components\DatePicker;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TimePicker;
-use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Get;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\BulkAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
-use Filament\Schemas\Schema;
-
-class LessonForm
+class KitchenSubscriptionsTable
 {
-
-    
-    public static function configure(Schema $schema): Schema
+    public static function configure(Table $table): Table
     {
-        return $schema
-            ->components([
-                Section::make('معلومات الدورة الأساسية')
-                    ->description('المعلومات الأساسية للدورة')
-                    ->schema([
-                        TextInput::make('title')
-                            ->label('عنوان الدورة')
-                            ->required()
-                            ->maxLength(255)
-                            ->columnSpan('full'),
-                        
-                        Select::make('lesson_section_id')
-                            ->label('قسم الدورة')
-                            ->options(LessonSection::active()->pluck('name', 'id'))
-                            ->searchable()
-                            ->preload()
-                            ->placeholder('اختر قسم الدورة')
-                            ->helperText('اختر القسم الذي ينتمي إليه هذه الدورة'),
-
-                        Select::make('teacher_id')
-                            ->label('المعلم')
-                            ->options(User::where('type', 'teacher')->pluck('name', 'id'))
-                            ->required()
-                            ->searchable()
-                            ->preload(),
-                        Select::make('location_type')
-                            ->label('نوع المكان')
-                            ->options([
-                                'online' => 'أونلاين',
-                                'offline' => 'حضوري',
-                            ])
-                            ->default('offline')
-                            ->required()
-                            ->live(),    
-
-                        Textarea::make('description')
-                            ->label('وصف الدورة')
-                            ->maxLength(1000)
-                            ->rows(3)
-                            ->columnSpan('full'),
-                        
-                        Select::make('is_mandatory')
-                            ->label('إجبارية (تحسب الحضور والغياب)')
-                            ->options([
-                                true => 'نعم',
-                                false => 'لا',
-                            ])
-                            ->default(true)
-                            ->helperText('إذا كانت اختيارية، لن يتم حساب الحضور والغياب لهذه الدورة')
-                            ->columnSpan('full'),
-                        
-                    ]) ->columnSpan('full') ->columns(3),
-                
-                Section::make('التوقيت والجدولة')
-                    ->description('معلومات التوقيت والجدولة')
-                    ->schema([
-                        DatePicker::make('start_date')
-                            ->label('تاريخ البداية')
-                            ->required()
-                            ->native(false)
-                            ->displayFormat('Y-m-d')
-                            //->minDate(now())
-                            ,
-                        
-                        DatePicker::make('end_date')
-                            ->label('تاريخ النهاية')
-                            ->required()
-                            ->native(false)
-                            ->displayFormat('Y-m-d')
-                            ->minDate(now())
-                            ->afterOrEqual('start_date'),
-
-                        TimePicker::make('start_time')
-                            ->label('وقت البداية')
-                            ->required()
-                            ->native(false)
-                            ->displayFormat('H:i'),
-                        
-                        TimePicker::make('end_time')
-                            ->label('وقت النهاية')
-                            ->required()
-                            ->native(false)
-                            ->displayFormat('H:i')
-                            ->after('start_time'),
-                        
-                            CheckboxList::make('lesson_days')
-                            ->label('أيام الدورة')
-                            ->options([
-                                'saturday' => 'السبت',
-                                'sunday' => 'الأحد',
-                                'monday' => 'الاثنين',
-                                'tuesday' => 'الثلاثاء',
-                                'wednesday' => 'الأربعاء',
-                                'thursday' => 'الخميس',
-                                'friday' => 'الجمعة',
-                            ])
-                            ->columns(4)
-                            ->required()
-                            ->helperText('اختر أيام الأسبوع التي سيتم فيها الدورة')
-                            ->columnSpan('full'),
-                        
-                        
-
-                        TextInput::make('max_students')
-                            ->label('العدد الأقصى للطلاب')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(1000)
-                            
-                            ->helperText('العدد الأقصى للطلاب في الدورة'),
-                        
-                        Select::make('status')
-                            ->label('حالة الدورة')
-                            ->options([
-                                'scheduled' => 'مجدول',
-                                'in_progress' => 'جاري',
-                                'completed' => 'مكتمل',
-                                'cancelled' => 'ملغي',
-                            ])
-                            ->default('scheduled')
-                            ->required(),
-                        
-                        //Toggle::make('is_recurring')
-                        //    ->label('الدورة متكررة')
-                        //    ->helperText('هل هذه الدورة تتكرر بانتظام؟')
-                        //    ->default(false),
-                     ])->columnSpan('full')->columns(4),
-                
-
-                Section::make('إعدادات إضافية')
-                    ->description('إعدادات وملاحظات إضافية')
-                    ->schema([
-                        
-                        Textarea::make('notes')
-                            ->label('ملاحظات')
-                            ->maxLength(1000)
-                            ->rows(3)
-                            ->helperText('ملاحظات إضافية حول الدورة')
-                            ->columnSpanFull()
-                            ->columnSpan('full'),
-                    ])->columnSpan('full'),
+        return $table
+            ->columns([
+                TextColumn::make('subscription_number')
+                    ->label('رقم الاشتراك')
+                    ->searchable(),
+                TextColumn::make('user.name')
+                    ->label('المشترك')  
+                    ->searchable(),
+                TextColumn::make('kitchen.name')
+                    ->label('المطبخ')
+                    ->searchable(),
+                TextColumn::make('start_date')
+                    ->label('تاريخ البدء')
+                    ->sortable(),
+                TextColumn::make('end_date')
+                    ->label('تاريخ الانتهاء')
+                    ->sortable(),
+                TextColumn::make('status')
+                    ->label('الحالة')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'active' => 'فعال',
+                        'paused' => 'متوقف',
+                        'cancelled' => 'ملغي',
+                        'expired' => 'منتهي',
+                        default => $state,
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'active' => 'success',
+                        'paused' => 'warning',
+                        'cancelled' => 'danger',
+                        'expired' => 'gray',
+                        default => 'gray',
+                    }),
+                TextColumn::make('monthly_price')
+                    ->label('قيمة الاشتراك الشهري')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('updated_at')
+                    ->label('تاريخ التحديث')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                //
+            ])
+            ->recordActions([
+                EditAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    BulkAction::make('pause_subscription')
+                        ->label('إيقاف الاشتراك')
+                        ->icon('heroicon-o-pause')
+                        ->color('warning')
+                        ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->update(['status' => 'paused'])),
+                    BulkAction::make('cancel_subscription')
+                        ->label('إلغاء الاشتراك')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->update(['status' => 'cancelled'])),
+                ]),
             ]);
     }
 }
