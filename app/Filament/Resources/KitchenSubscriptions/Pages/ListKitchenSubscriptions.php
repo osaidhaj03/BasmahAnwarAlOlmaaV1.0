@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\KitchenSubscriptions\Pages;
 
 use App\Filament\Resources\KitchenSubscriptions\KitchenSubscriptionResource;
+use App\Filament\Resources\KitchenSubscriptions\Widgets\KitchenSubscriptionStats;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
@@ -20,7 +21,7 @@ class ListKitchenSubscriptions extends ListRecords
     protected function getHeaderWidgets(): array
     {
         return [
-            KitchenSubscriptionResource\Widgets\KitchenSubscriptionStats::class,
+            KitchenSubscriptionStats::class,
         ];
     }
 }
