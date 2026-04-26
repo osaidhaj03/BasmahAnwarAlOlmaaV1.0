@@ -16,4 +16,11 @@ class ListKitchenSubscriptions extends ListRecords
             CreateAction::make(),
         ];
     }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            KitchenSubscriptionResource\Widgets\KitchenSubscriptionStats::class,
+        ];
+    }
 }

@@ -31,13 +31,23 @@ class KitchenSubscriptionsTable
                     ->sortable(),
                 TextColumn::make('status')
                     ->label('الحالة')
-                    ->badge(),
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'active' => 'فعال',
+                        'paused' => 'متوقف',
+                        'cancelled' => 'ملغي',
+                        'expired' => 'منتهي',
+                        default => $state,
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'active' => 'success',
+                        'paused' => 'warning',
+                        'cancelled' => 'danger',
+                        'expired' => 'gray',
+                        default => 'gray',
+                    }),
                 TextColumn::make('monthly_price')
                     ->label('قيمة الاشتراك الشهري')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('number_meal')
-                    ->label('عدد الوجبات')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('created_at')
@@ -59,7 +69,17 @@ class KitchenSubscriptionsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    \Filament\Tables\Actions\BulkAction::make('pause_subscription')
+                        ->label('إيقاف الاشتراك')
+                        ->icon('heroicon-o-pause')
+                        ->color('warning')
+                        ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->update(['status' => 'paused'])),
+                    \Filament\Tables\Actions\BulkAction::make('cancel_subscription')
+                        ->label('إلغاء الاشتراك')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->update(['status' => 'cancelled'])),
                 ]),
             ]);
     }

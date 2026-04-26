@@ -36,7 +36,15 @@ class KitchenSubscriptionForm
                             ->relationship('user', 'name')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->rules([
+                                fn (callable $get) => function (string $attribute, $value, \Closure $fail) use ($get) {
+                                    $recordId = $get('id'); // قد يكون null في حالة الإضافة
+                                    if (KitchenSubscription::hasActiveSubscription($value, $recordId) && $get('status') === 'active') {
+                                        $fail('هذا المشترك لديه اشتراك فعال حالياً. لا يمكن إضافة اشتراك فعال آخر.');
+                                    }
+                                },
+                            ]),
                         Select::make('kitchen_id')
                             ->label('المطبخ')
                             ->relationship('kitchen', 'name')
@@ -83,9 +91,10 @@ class KitchenSubscriptionForm
                         Select::make('status')
                             ->label('الحالة')
                             ->options([
-                                'active' => 'نشط',
-                                'paused' => 'متوقف مؤقتاً',
-                                'cancelled' => 'ملغى',
+                                'active' => 'فعال',
+                                'paused' => 'متوقف',
+                                'cancelled' => 'ملغي',
+                                'expired' => 'منتهي',
                             ])
                             ->default('active')
                             ->required(),
@@ -100,15 +109,9 @@ class KitchenSubscriptionForm
                         TextInput::make('monthly_price')
                             ->label('السعر الشهري')
                             ->required()
+                            ->default(30)
                             ->numeric()
                             ->prefix('د.أ'),
-                        TextInput::make('number_meal')
-                            ->label('عدد الوجبات اليومية')
-                            ->required()
-                            ->numeric()
-                            ->default(1)
-                            ->minValue(1)
-                            ->maxValue(3),
                         Textarea::make('notes')
                             ->label('ملاحظات')
                             ->default(null)

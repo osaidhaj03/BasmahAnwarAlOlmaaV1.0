@@ -14,9 +14,15 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class KitchenSubscriptionResource extends Resource
 {
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
     protected static ?string $model = KitchenSubscription::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-check';

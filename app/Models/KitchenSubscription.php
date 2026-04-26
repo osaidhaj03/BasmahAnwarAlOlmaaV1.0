@@ -160,9 +160,10 @@ class KitchenSubscription extends Model
     public function getStatusArabicAttribute(): string
     {
         return match($this->status) {
-            'active' => 'نشط',
-            'paused' => 'موقوف',
+            'active' => 'فعال',
+            'paused' => 'متوقف',
             'cancelled' => 'ملغي',
+            'expired' => 'منتهي',
             default => $this->status,
         };
     }
@@ -190,5 +191,21 @@ class KitchenSubscription extends Model
     public function scopeCancelled($query)
     {
         return $query->where('status', 'cancelled');
+    }
+
+    public function scopeExpired($query)
+    {
+        return $query->where('status', 'expired');
+    }
+
+    /**
+     * التحقق مما إذا كان للمستخدم اشتراك فعال آخر
+     */
+    public static function hasActiveSubscription($userId, $excludeId = null): bool
+    {
+        return static::where('user_id', $userId)
+            ->where('status', 'active')
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->exists();
     }
 }
