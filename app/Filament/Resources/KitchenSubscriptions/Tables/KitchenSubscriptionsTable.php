@@ -70,12 +70,12 @@ class KitchenSubscriptionsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    \Filament\Tables\Actions\BulkAction::make('pause_subscription')
+                    BulkAction::make('pause_subscription')
                         ->label('إيقاف الاشتراك')
                         ->icon('heroicon-o-pause')
                         ->color('warning')
                         ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->update(['status' => 'paused'])),
-                    \Filament\Tables\Actions\BulkAction::make('cancel_subscription')
+                    BulkAction::make('cancel_subscription')
                         ->label('إلغاء الاشتراك')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
