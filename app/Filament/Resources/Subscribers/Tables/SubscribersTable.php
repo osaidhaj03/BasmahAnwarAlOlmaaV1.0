@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Filament\Tables\Filters\DateRangeFilter;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 class SubscribersTable
 {
@@ -151,6 +152,8 @@ class SubscribersTable
                 //    ->trueLabel('نشط')
                 //    ->falseLabel('غير نشط'),
             ])
+
+            ->query(fn (Builder $query) => $query->whereHas('kitchenSubscriptions', fn ($q) => $q->where('status', 'active')))
 
             ->recordActions([
                 // زر تسليم وجبة لكل صف
