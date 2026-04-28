@@ -7,6 +7,10 @@ use App\Filament\Resources\KitchenPayments\Pages\EditKitchenPayments;
 use App\Filament\Resources\KitchenPayments\Pages\ListKitchenPayments;
 use App\Filament\Resources\KitchenPayments\Schemas\KitchenPaymentsForm;
 use App\Filament\Resources\KitchenPayments\Tables\KitchenPaymentsTable;
+use App\Filament\Widgets\AdminLatestPaymentsTable;
+use App\Filament\Widgets\KitchenPaymentsPendingTransfersTable;
+use App\Filament\Widgets\KitchenPaymentsSummaryWidget;
+use App\Filament\Widgets\KitchenPaymentsTransferChart;
 use App\Models\KitchenPayment;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -58,6 +62,16 @@ class KitchenPaymentsResource extends Resource
             'index' => ListKitchenPayments::route('/'),
             'create' => CreateKitchenPayments::route('/create'),
             'edit' => EditKitchenPayments::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            KitchenPaymentsSummaryWidget::class,
+            AdminLatestPaymentsTable::class,
+            KitchenPaymentsTransferChart::class,
+            KitchenPaymentsPendingTransfersTable::class,
         ];
     }
 }

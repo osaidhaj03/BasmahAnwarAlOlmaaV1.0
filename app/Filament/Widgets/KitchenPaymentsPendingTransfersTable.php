@@ -7,10 +7,11 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
-class AdminLatestPaymentsTable extends BaseWidget
+class KitchenPaymentsPendingTransfersTable extends BaseWidget
 {
-    protected static ?int $sort = 5;
-    protected static ?string $heading = 'آخر سندات القبض';
+    protected static ?int $sort = 4;
+
+    protected static ?string $heading = 'السندات بانتظار التسليم';
 
     protected int | string | array $columnSpan = 'full';
 
@@ -18,23 +19,19 @@ class AdminLatestPaymentsTable extends BaseWidget
     {
         return $table
             ->query(
-                KitchenPayment::query()->with(['subscription.user', 'collector', 'deliveredTo'])->latest('payment_date')->limit(10)
+                KitchenPayment::query()->with(['subscription.user', 'collector'])->whereNull('delivered_to')->latest('payment_date')->limit(10)
             )
             ->columns([
                 Tables\Columns\TextColumn::make('subscription.user.name')
                     ->label('اسم المشترك'),
                 Tables\Columns\TextColumn::make('collector.name')
                     ->label('المحصّل'),
-                Tables\Columns\TextColumn::make('deliveredTo.name')
-                    ->label('تم التسليم إلى')
-                    ->placeholder('لم يتم التسليم'),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('المبلغ')
                     ->money('JOD'),
                 Tables\Columns\TextColumn::make('payment_date')
                     ->label('تاريخ الدفع')
-                    ->date()
-                    ->sortable(),
+                    ->date(),
                 Tables\Columns\TextColumn::make('payment_method')
                     ->label('طريقة الدفع')
                     ->formatStateUsing(fn (?string $state): string => match ($state) {

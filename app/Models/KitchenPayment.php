@@ -16,6 +16,7 @@ class KitchenPayment extends Model
         'amount',
         'payment_date',
         'collected_by',
+        'delivered_to',
         'payment_method',
         'notes',
     ];
@@ -61,6 +62,14 @@ class KitchenPayment extends Model
     public function collector(): BelongsTo
     {
         return $this->belongsTo(User::class, 'collected_by');
+    }
+
+    /**
+     * المستلم الداخلي للتحويل
+     */
+    public function deliveredTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'delivered_to');
     }
 
     // Accessors
