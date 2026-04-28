@@ -170,7 +170,10 @@ class SubscribersTable
                         if (!$todayMeal) {
                             return '⚠️ لا توجد وجبة مسجلة لهذا اليوم!';
                         }
-                        return "هل تريد تسليم وجبة ({$todayMeal->name}) للمشترك: {$record->name}؟";
+                        if (!$record) {
+                            return "هل تريد تسليم وجبة ({$todayMeal->name}) للمشترك؟";
+                        }
+                        return "هل تريد تسليم وجبة ({$todayMeal->name}) للمشترك: {$record->name}?";
                     })
                     ->modalSubmitActionLabel('نعم، تسليم')
                     ->action(function ($record) {
@@ -215,6 +218,7 @@ class SubscribersTable
                             
                             $count = 0;
                             foreach ($records as $record) {
+                                if (!$record) continue;
                                 if ($record->kitchenSubscriptions()->where('status', 'active')->exists()) {
                                     self::deliverMealToUser($record);
                                     $count++;
