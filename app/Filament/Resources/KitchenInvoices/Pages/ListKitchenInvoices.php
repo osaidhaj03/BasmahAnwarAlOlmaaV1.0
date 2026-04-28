@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\KitchenInvoices\Pages;
 
 use App\Filament\Resources\KitchenInvoices\KitchenInvoiceResource;
+use App\Filament\Widgets\KitchenInvoicesSummaryWidget;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 use Livewire\Attributes\On;
@@ -22,7 +23,7 @@ class ListKitchenInvoices extends ListRecords
     protected function getHeaderWidgets(): array
     {
         return [
-            \App\Filament\Widgets\AutoInvoiceWidget::class,
+            KitchenInvoicesSummaryWidget::class,
         ];
     }
 

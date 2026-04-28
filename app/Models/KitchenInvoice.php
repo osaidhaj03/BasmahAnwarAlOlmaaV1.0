@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class KitchenInvoice extends Model
 {
     use HasFactory;
+
+    protected $appends = [
+        'billing_period',
+    ];
 
     protected $fillable = [
         'subscription_id',
@@ -136,6 +141,40 @@ class KitchenInvoice extends Model
         return $this->status !== 'paid' && $this->due_date < today();
     }
 
+    /**
+     * فترة الفاتورة المحسوبة من تاريخ الفوترة.
+     * المثال: 25/1 إلى 25/2 لفاتورة شهر 2.
+     */
+    public function getBillingPeriodStartAttribute(): Carbon
+    {
+        $billingDate = $this->billing_date instanceof Carbon
+            ? $this->billing_date->copy()
+            : Carbon::parse($this->billing_date);
+
+        $start = $billingDate->copy()->day(25)->startOfDay();
+
+        if ($billingDate->day < 25) {
+            $start->subMonthNoOverflow();
+        }
+
+        return $start;
+    }
+
+    public function getBillingPeriodEndAttribute(): Carbon
+    {
+        return $this->billing_period_start->copy()->addMonthNoOverflow()->startOfDay();
+    }
+
+    public function getBillingPeriodAttribute(): string
+    {
+        return sprintf(
+            'شهر %s (%s - %s)',
+            $this->billing_period_end->format('n'),
+            $this->billing_period_start->format('d/m'),
+            $this->billing_period_end->format('d/m')
+        );
+    }
+
     // Scopes
 
     public function scopePending($query)
@@ -210,8 +249,8 @@ class KitchenInvoice extends Model
         parent::boot();
 
         static::deleting(function ($invoice) {
-            if ($invoice->allocations()->count() > 0) {
-                throw new \Exception('لا يمكن حذف فاتورة مرتبطة بدفعات. يرجى حذف الدفعات أولاً.');
+            if ($invoice->allocations()->exists()) {
+                throw new \Exception('لا يمكن حذف فاتورة مرتبطة بسند قبض. يرجى حذف سند القبض أولاً.');
             }
         });
     }

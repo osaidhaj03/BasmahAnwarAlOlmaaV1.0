@@ -36,6 +36,10 @@ class KitchenInvoicesTable
                     ->label('المبلغ المطلوب')
                     ->money('JOD')
                     ->sortable(),
+                TextColumn::make('billing_period')
+                    ->label('فترة الفاتورة')
+                    ->badge()
+                    ->color('primary'),
                 TextColumn::make('total_paid')
                     ->label('المدفوع')
                     ->money('JOD')
@@ -94,10 +98,10 @@ class KitchenInvoicesTable
                     ->modalWidth('7xl'),
                 DeleteAction::make()
                     ->before(function ($record, DeleteAction $action) {
-                        if ($record->allocations()->count() > 0) {
-                            \Filament\Notifications\Notification::make()
-                                ->title('⚠️ لا يمكن حذف الفاتورة')
-                                ->body('هذه الفاتورة مرتبطة بدفعات. يرجى حذف الدفعات أولاً قبل حذف الفاتورة.')
+                        if ($record->allocations()->exists()) {
+                            Notification::make()
+                                ->title('لا يمكن حذف الفاتورة')
+                                ->body('هذه الفاتورة مرتبطة بسند قبض. يرجى حذف سند القبض أولاً قبل حذف الفاتورة.')
                                 ->danger()
                                 ->persistent()
                                 ->send();
@@ -152,12 +156,12 @@ class KitchenInvoicesTable
                         ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make()
                         ->before(function ($records, DeleteBulkAction $action) {
-                            $hasPayments = $records->filter(fn ($record) => $record->allocations()->count() > 0);
+                            $hasPayments = $records->filter(fn ($record) => $record->allocations()->exists());
                             
                             if ($hasPayments->isNotEmpty()) {
-                                \Filament\Notifications\Notification::make()
-                                    ->title('⚠️ لا يمكن حذف بعض الفواتير')
-                                    ->body('الفواتير التالية مرتبطة بدفعات ولا يمكن حذفها: ' . $hasPayments->pluck('invoice_number')->join(', '))
+                                Notification::make()
+                                    ->title('لا يمكن حذف بعض الفواتير')
+                                    ->body('الفواتير التالية مرتبطة بسند قبض ولا يمكن حذفها: ' . $hasPayments->pluck('invoice_number')->join(', '))
                                     ->danger()
                                     ->persistent()
                                     ->send();

@@ -8,6 +8,7 @@ use App\Filament\Resources\KitchenInvoices\Pages\ListKitchenInvoices;
 use App\Filament\Resources\KitchenInvoices\Schemas\KitchenInvoiceForm;
 use App\Filament\Resources\KitchenInvoices\Tables\KitchenInvoicesTable;
 use App\Filament\Widgets\AutoInvoiceWidget;
+use App\Filament\Widgets\KitchenInvoicesSummaryWidget;
 use App\Models\KitchenInvoice;
 use BackedEnum;
 use UnitEnum;
@@ -54,6 +55,7 @@ class KitchenInvoiceResource extends Resource
     {
         return [
             AutoInvoiceWidget::class,
+            KitchenInvoicesSummaryWidget::class,
         ];
     }
 
@@ -71,7 +73,7 @@ class KitchenInvoiceResource extends Resource
      */
     public static function canDelete($record): bool
     {
-        return $record->allocations()->count() === 0;
+        return ! $record->allocations()->exists();
     }
 }
 

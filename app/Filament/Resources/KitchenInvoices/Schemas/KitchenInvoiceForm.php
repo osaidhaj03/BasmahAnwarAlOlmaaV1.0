@@ -93,7 +93,8 @@ class KitchenInvoiceForm
                         DatePicker::make('billing_date')
                             ->label('تاريخ الفوترة')
                             ->required()
-                            ->default(now()),
+                            ->default(now())
+                            ->helperText('مثال: فاتورة شهر 2 تكون ضمن الفترة 25/1 إلى 25/2 حسب تاريخ الفوترة'),
 
                         // تاريخ الاستحقاق - أول الشهر القادم تلقائياً
                         DatePicker::make('due_date')
