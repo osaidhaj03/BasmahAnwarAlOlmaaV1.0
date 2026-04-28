@@ -8,11 +8,14 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Actions\BulkAction;
 use Filament\Notifications\Notification;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class KitchenInvoicesTable
@@ -82,6 +85,39 @@ class KitchenInvoicesTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Filter::make('billing_period')
+                    ->form([
+                        DatePicker::make('from')
+                            ->label('من تاريخ')
+                            ->placeholder('اختر بداية الفترة')
+                            ->native(false)
+                            ->displayFormat('Y-m-d'),
+                        DatePicker::make('to')
+                            ->label('إلى تاريخ')
+                            ->placeholder('اختر نهاية الفترة')
+                            ->native(false)
+                            ->displayFormat('Y-m-d'),
+                    ])
+                    ->columns(2)
+                    ->indicateUsing(function (array $data): ?string {
+                        if (!$data['from'] && !$data['to']) {
+                            return null;
+                        }
+
+                        $from = $data['from'] ? Carbon::parse($data['from'])->format('Y-m-d') : 'البداية';
+                        $to = $data['to'] ? Carbon::parse($data['to'])->format('Y-m-d') : 'الآن';
+
+                        return "فترة الفاتورة: {$from} - {$to}";
+                    })
+                    ->query(function ($query, array $data) {
+                        if (!empty($data['from'])) {
+                            $query->whereDate('billing_date', '>=', $data['from']);
+                        }
+
+                        if (!empty($data['to'])) {
+                            $query->whereDate('billing_date', '<=', $data['to']);
+                        }
+                    }),
                 SelectFilter::make('status')
                     ->label('الحالة')
                     ->options([
