@@ -68,14 +68,15 @@ class SubscribersTable
                 // حالة وجبة اليوم
                 TextColumn::make('today_meal_status')
                     ->label('وجبة اليوم')
-                    ->getStateUsing(function ($record) {
-                        $todayDelivery = MealDelivery::where('user_id', $record->id)
-                            ->whereDate('delivery_date', today())
-                            ->first();
+                        ->getStateUsing(function ($record) {
+                            if (!$record) return 'لم يتم التسليم';
+                            $todayDelivery = MealDelivery::where('user_id', $record->id)
+                                ->whereDate('delivery_date', today())
+                                ->first();
                         
-                        if (!$todayDelivery) return 'لم يتم التسليم';
-                        return $todayDelivery->status === 'delivered' ? 'تم التسليم' : 'لم يتم التسليم';
-                    })
+                            if (!$todayDelivery) return 'لم يتم التسليم';
+                            return $todayDelivery->status === 'delivered' ? 'تم التسليم' : 'لم يتم التسليم';
+                        })
                     ->badge()
                     ->color(fn ($state) => match($state) {
                         'تم التسليم' => 'success',
@@ -86,6 +87,7 @@ class SubscribersTable
                 TextColumn::make('outstanding_balance')
                     ->label('المبالغ')
                     ->getStateUsing(function ($record) {
+                        if (!$record) return 0;
                         $subscription = $record->kitchenSubscriptions()->where('status', 'active')->first();
                         if (!$subscription) return 0;
                         
@@ -175,6 +177,7 @@ class SubscribersTable
                         self::deliverMealToUser($record);
                     })
                     ->visible(function ($record) {
+                        if (!$record) return false;
                         // لازم اشتراك فعال + وجبة اليوم موجودة
                         $hasActiveSubscription = $record->kitchenSubscriptions()->where('status', 'active')->exists();
                         $todayMealExists = Meal::whereDate('meal_date', today())->exists();
