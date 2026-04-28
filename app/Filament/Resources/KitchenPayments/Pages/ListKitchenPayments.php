@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\KitchenPayments\Pages;
 
+use App\Filament\Cook\Widgets\CookPaymentsSummaryWidget;
 use App\Filament\Resources\KitchenPayments\KitchenPaymentsResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
@@ -15,6 +16,13 @@ class ListKitchenPayments extends ListRecords
         return [
             CreateAction::make()
                 ->modal(),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            CookPaymentsSummaryWidget::class,
         ];
     }
 }
