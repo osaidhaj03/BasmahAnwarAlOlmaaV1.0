@@ -19,6 +19,7 @@ use Filament\Tables\Filters\DateRangeFilter;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use App\Models\User;
 
 class SubscribersTable
 {
@@ -155,7 +156,7 @@ class SubscribersTable
                 //    ->falseLabel('غير نشط'),
             ])
 
-            ->query(fn (Builder $query) => $query->whereHas('kitchenSubscriptions', fn ($q) => $q->where('status', 'active')))
+            ->query(fn () => User::query()->whereHas('kitchenSubscriptions', fn ($q) => $q->where('status', 'active')))
 
             ->recordActions([
                 // زر تسليم وجبة لكل صف
