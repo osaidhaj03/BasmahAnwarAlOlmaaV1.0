@@ -14,6 +14,8 @@ class CookPaymentsSummaryWidget extends BaseWidget
 
     protected ?string $heading = 'ملخص سنداتي';
 
+    private const CUSTODY_WARNING_AMOUNT = 100.00;
+
     protected function getStats(): array
     {
         $userId = Auth::id();
@@ -30,11 +32,15 @@ class CookPaymentsSummaryWidget extends BaseWidget
         $deliveredCount = (clone $deliveredPayments)->count();
         $todayAmount = (clone $todayPayments)->sum('amount');
 
+        $pendingAmountDescription = $pendingAmount >= self::CUSTODY_WARNING_AMOUNT
+            ? 'تنبيه عهدة: يرجى تسليم السندات'
+            : 'سندات قبض لم يتم تسليمها بعد';
+
         return [
             Stat::make('قيمة السندات غير المسلمة', number_format($pendingAmount, 2) . ' د.أ')
-                ->description('سندات قبض لم يتم تسليمها بعد')
+                ->description($pendingAmountDescription)
                 ->descriptionIcon('heroicon-m-banknotes')
-                ->color('warning'),
+                ->color($pendingAmount >= self::CUSTODY_WARNING_AMOUNT ? 'danger' : 'warning'),
 
             Stat::make('عدد السندات غير المسلمة', $pendingCount)
                 ->description('بانتظار التسليم')

@@ -31,7 +31,7 @@ class CookPaymentsChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'المبالغ المحصلة (ر.س)',
+                    'label' => 'المبالغ المحصلة (د.أ)',
                     'data' => $data->toArray(),
                     'backgroundColor' => '#3b82f6',
                     'borderColor' => '#3b82f6',

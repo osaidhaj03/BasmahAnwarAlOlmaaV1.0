@@ -30,7 +30,7 @@ class LatestPaymentsTable extends BaseWidget
                     ->label('اسم المشترك'),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('المبلغ')
-                    ->money('SAR'),
+                    ->money('JOD'),
                 Tables\Columns\TextColumn::make('payment_date')
                     ->label('تاريخ الدفع')
                     ->date()

@@ -28,7 +28,7 @@ class SubscribersWithUnpaidInvoicesTable extends BaseWidget
                     ->label('رقم الفاتورة'),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('المبلغ')
-                    ->money('SAR'),
+                    ->money('JOD'),
                 Tables\Columns\TextColumn::make('due_date')
                     ->label('تاريخ الاستحقاق')
                     ->date()
