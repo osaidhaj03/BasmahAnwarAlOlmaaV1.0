@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Meals\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -67,7 +68,21 @@ class MealsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->before(function ($records, DeleteBulkAction $action) {
+                            $mealsWithDeliveries = $records->filter(fn ($record) => $record->deliveries()->exists());
+
+                            if ($mealsWithDeliveries->isNotEmpty()) {
+                                Notification::make()
+                                    ->title('لا يمكن حذف بعض الوجبات')
+                                    ->body('يوجد وجبات مرتبطة بسجلات تسليم وجبات، ولا يمكن حذفها: ' . $mealsWithDeliveries->pluck('name')->join(', '))
+                                    ->danger()
+                                    ->persistent()
+                                    ->send();
+
+                                $action->cancel();
+                            }
+                        }),
                 ]),
             ])
             ->defaultSort('meal_date', 'desc');
