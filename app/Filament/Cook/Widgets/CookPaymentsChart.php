@@ -12,6 +12,11 @@ class CookPaymentsChart extends ChartWidget
     protected ?string $heading = 'المبالغ المحصلة (آخر 7 أيام)';
     protected ?string $maxHeight = '300px';
 
+    public static function canView(): bool
+    {
+        return false;
+    }
+
     protected function getData(): array
     {
         $data = collect();
