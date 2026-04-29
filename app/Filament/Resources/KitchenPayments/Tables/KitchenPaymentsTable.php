@@ -4,13 +4,17 @@ namespace App\Filament\Resources\KitchenPayments\Tables;
 
 use App\Models\KitchenPayment;
 use App\Models\User;
+use Carbon\Carbon;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Filament\Actions\BulkAction;
@@ -71,7 +75,82 @@ class KitchenPaymentsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('delivery_status')
+                    ->label('حالة التسليم')
+                    ->options([
+                        'pending' => 'غير مسلّم',
+                        'delivered' => 'مسلّم',
+                    ])
+                    ->query(function ($query, array $data) {
+                        return match ($data['value'] ?? null) {
+                            'pending' => $query->whereNull('delivered_to'),
+                            'delivered' => $query->whereNotNull('delivered_to'),
+                            default => $query,
+                        };
+                    }),
+
+                Filter::make('payment_date')
+                    ->form([
+                        DatePicker::make('from')
+                            ->label('من تاريخ')
+                            ->placeholder('اختر بداية الفترة')
+                            ->native(false)
+                            ->displayFormat('Y-m-d'),
+                        DatePicker::make('to')
+                            ->label('إلى تاريخ')
+                            ->placeholder('اختر نهاية الفترة')
+                            ->native(false)
+                            ->displayFormat('Y-m-d'),
+                    ])
+                    ->columns(2)
+                    ->indicateUsing(function (array $data): ?string {
+                        if (!$data['from'] && !$data['to']) {
+                            return null;
+                        }
+
+                        $from = $data['from'] ? Carbon::parse($data['from'])->format('Y-m-d') : 'البداية';
+                        $to = $data['to'] ? Carbon::parse($data['to'])->format('Y-m-d') : 'الآن';
+
+                        return "تاريخ الدفع: {$from} - {$to}";
+                    })
+                    ->query(function ($query, array $data) {
+                        if (!empty($data['from'])) {
+                            $query->whereDate('payment_date', '>=', $data['from']);
+                        }
+
+                        if (!empty($data['to'])) {
+                            $query->whereDate('payment_date', '<=', $data['to']);
+                        }
+                    }),
+
+                SelectFilter::make('collected_by')
+                    ->label('المحصّل')
+                    ->options(fn () => User::query()
+                        ->active()
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->toArray())
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('delivered_to')
+                    ->label('تم التسليم إلى')
+                    ->options(fn () => User::query()
+                        ->active()
+                        ->whereHas('roles', fn ($query) => $query->where('slug', 'admin'))
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->toArray())
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('payment_method')
+                    ->label('طريقة الدفع')
+                    ->options([
+                        'cash' => 'نقداً',
+                        'bank_transfer' => 'تحويل بنكي',
+                        'credit_balance' => 'خصم من الرصيد المتاح',
+                    ]),
             ])
             ->recordActions([
                 // التعديل مغلق - الدفعات لا يمكن تعديلها
