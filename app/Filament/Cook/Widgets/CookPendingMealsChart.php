@@ -8,7 +8,7 @@ use Filament\Widgets\ChartWidget;
 
 class CookPendingMealsChart extends ChartWidget
 {
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 4;
 
     protected ?string $heading = 'الوجبات غير المسلمة (آخر 7 أيام)';
 

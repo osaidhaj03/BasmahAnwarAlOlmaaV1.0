@@ -8,7 +8,7 @@ use Carbon\Carbon;
 
 class CookMealsChart extends ChartWidget
 {
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 3;
     protected ?string $heading = 'الوجبات المسلمة (آخر 7 أيام)';
     protected ?string $maxHeight = '300px';
 
