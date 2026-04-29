@@ -7,7 +7,7 @@ use Filament\Widgets\Widget;
 
 class CreateKitchenPaymentShortcutWidget extends Widget
 {
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 0;
 
     protected string $view = 'filament.cook.widgets.create-kitchen-payment-shortcut-widget';
 

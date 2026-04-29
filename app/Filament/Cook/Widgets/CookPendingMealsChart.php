@@ -3,13 +3,15 @@
 namespace App\Filament\Cook\Widgets;
 
 use App\Models\MealDelivery;
-use Filament\Widgets\ChartWidget;
 use Carbon\Carbon;
+use Filament\Widgets\ChartWidget;
 
-class CookMealsChart extends ChartWidget
+class CookPendingMealsChart extends ChartWidget
 {
-    protected static ?int $sort = 2;
-    protected ?string $heading = 'الوجبات المسلمة (آخر 7 أيام)';
+    protected static ?int $sort = 3;
+
+    protected ?string $heading = 'الوجبات غير المسلمة (آخر 7 أيام)';
+
     protected ?string $maxHeight = '300px';
 
     protected int | string | array $columnSpan = 1;
@@ -21,17 +23,23 @@ class CookMealsChart extends ChartWidget
 
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i);
+
             $labels->push($date->format('m/d'));
-            $data->push(MealDelivery::whereDate('delivery_date', $date)->delivered()->count());
+            $data->push(
+                MealDelivery::query()
+                    ->whereDate('delivery_date', $date)
+                    ->pending()
+                    ->count()
+            );
         }
 
         return [
             'datasets' => [
                 [
-                    'label' => 'الوجبات المسلمة',
+                    'label' => 'الوجبات غير المسلمة',
                     'data' => $data->toArray(),
-                    'borderColor' => '#10b981',
-                    'backgroundColor' => 'rgba(16, 185, 129, 0.2)',
+                    'borderColor' => '#f59e0b',
+                    'backgroundColor' => 'rgba(245, 158, 11, 0.2)',
                     'fill' => true,
                     'tension' => 0.4,
                 ],

@@ -30,8 +30,8 @@ class CookStatsOverview extends BaseWidget
                 ->description('عدد الوجبات التي تم تسليمها اليوم')
                 ->descriptionIcon('heroicon-m-check-circle')
                 ->color('success'),
-            Stat::make('إجمالي الاشتراكات', KitchenSubscription::count())
-                ->description('جميع الاشتراكات')
+            Stat::make('إجمالي الاشتراكات الفعالة', KitchenSubscription::active()->count())
+                ->description('الاشتراكات النشطة حالياً')
                 ->descriptionIcon('heroicon-m-clipboard-document-list')
                 ->color('info'),
             //Stat::make('إجمالي المشتركين', KitchenSubscription::distinct('user_id')->count('user_id'))
