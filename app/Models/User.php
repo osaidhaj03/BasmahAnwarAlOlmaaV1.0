@@ -82,6 +82,10 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         }
 
         // Student panel - للطلاب والزبائن
+        if (in_array($panel->getId(), ['lessons-admin', 'kitchen-admin'], true)) {
+            return $this->hasRole('admin') || $this->type === 'admin';
+        }
+
         if ($panel->getId() === 'student') {
             return $this->hasRole(['student', 'customer']) || in_array($this->type, ['student', 'customer']);
         }

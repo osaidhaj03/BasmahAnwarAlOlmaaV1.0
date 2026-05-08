@@ -2,14 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Cook\Widgets\CookMealsChart;
-use App\Filament\Cook\Widgets\CookPaymentsChart;
-use App\Filament\Cook\Widgets\CookPaymentsSummaryWidget;
-use App\Filament\Cook\Widgets\CookPendingMealsChart;
-use App\Filament\Cook\Widgets\CookStatsOverview;
-use App\Filament\Cook\Widgets\CreateKitchenPaymentShortcutWidget;
-use App\Filament\Cook\Widgets\LatestPaymentsTable;
-use App\Filament\Cook\Widgets\SubscribersWithUnpaidInvoicesTable;
 use App\Filament\Resources\KitchenExpenses\KitchenExpenseResource;
 use App\Filament\Resources\KitchenInvoices\KitchenInvoiceResource;
 use App\Filament\Resources\KitchenPayments\KitchenPaymentsResource;
@@ -17,6 +9,13 @@ use App\Filament\Resources\KitchenSubscriptions\KitchenSubscriptionResource;
 use App\Filament\Resources\MealDeliveries\MealDeliveryResource;
 use App\Filament\Resources\Meals\MealResource;
 use App\Filament\Resources\Subscribers\SubscriberResource;
+use App\Filament\Widgets\AdminLatestPaymentsTable;
+use App\Filament\Widgets\KitchenAdminStatsWidget;
+use App\Filament\Widgets\KitchenInvoicesSummaryWidget;
+use App\Filament\Widgets\KitchenPaymentsPendingTransfersTable;
+use App\Filament\Widgets\KitchenPaymentsSummaryWidget;
+use App\Filament\Widgets\LatestSubscriptionsTable;
+use App\Filament\Widgets\UnpaidInvoicesTable;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -33,24 +32,22 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
-use Caresome\FilamentNeobrutalism\NeobrutalismeTheme;
 
-class CookPanelProvider extends PanelProvider
+class KitchenAdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->id('cook')
-            ->path('cook')
+            ->id('kitchen-admin')
+            ->path('kitchen-admin')
             ->login()
             ->sidebarFullyCollapsibleOnDesktop()
             ->databaseNotifications()
-            ->brandName('لوحة التحكم الخاصة بالطباخ')
+            ->brandName('Kitchen Admin')
             ->colors([
                 'primary' => Color::Green,
             ])
             ->plugins([
-                NeobrutalismeTheme::make(),
                 BreezyCore::make()
                     ->myProfile(
                         shouldRegisterUserMenu: true,
@@ -59,7 +56,6 @@ class CookPanelProvider extends PanelProvider
                         slug: 'my-profile'
                     ),
             ])
-            ->discoverResources(in: app_path('Filament/Cook/Resources'), for: 'App\\Filament\\Cook\\Resources')
             ->resources([
                 SubscriberResource::class,
                 KitchenSubscriptionResource::class,
@@ -69,21 +65,18 @@ class CookPanelProvider extends PanelProvider
                 KitchenPaymentsResource::class,
                 KitchenExpenseResource::class,
             ])
-            ->discoverPages(in: app_path('Filament/Cook/Pages'), for: 'App\\Filament\\Cook\\Pages')
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Cook/Widgets'), for: 'App\\Filament\\Cook\\Widgets')
             ->widgets([
-                // AccountWidget::class,
-                CookStatsOverview::class,
-                CookPaymentsSummaryWidget::class,
-                CreateKitchenPaymentShortcutWidget::class,
-                CookMealsChart::class,
-                CookPendingMealsChart::class,
-                CookPaymentsChart::class,
-                SubscribersWithUnpaidInvoicesTable::class,
-                LatestPaymentsTable::class,
+                KitchenAdminStatsWidget::class,
+                KitchenPaymentsSummaryWidget::class,
+                KitchenInvoicesSummaryWidget::class,
+                LatestSubscriptionsTable::class,
+                AdminLatestPaymentsTable::class,
+                UnpaidInvoicesTable::class,
+                KitchenPaymentsPendingTransfersTable::class,
+                AccountWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

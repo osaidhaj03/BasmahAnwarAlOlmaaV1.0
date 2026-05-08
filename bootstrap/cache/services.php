@@ -54,8 +54,10 @@
     50 => 'App\\Providers\\AppServiceProvider',
     51 => 'App\\Providers\\AuthServiceProvider',
     52 => 'App\\Providers\\Filament\\AdminPanelProvider',
-    53 => 'App\\Providers\\Filament\\StudentPanelProvider',
-    54 => 'App\\Providers\\Filament\\CookPanelProvider',
+    53 => 'App\\Providers\\Filament\\LessonsAdminPanelProvider',
+    54 => 'App\\Providers\\Filament\\KitchenAdminPanelProvider',
+    55 => 'App\\Providers\\Filament\\StudentPanelProvider',
+    56 => 'App\\Providers\\Filament\\CookPanelProvider',
   ),
   'eager' => 
   array (
@@ -97,8 +99,10 @@
     35 => 'App\\Providers\\AppServiceProvider',
     36 => 'App\\Providers\\AuthServiceProvider',
     37 => 'App\\Providers\\Filament\\AdminPanelProvider',
-    38 => 'App\\Providers\\Filament\\StudentPanelProvider',
-    39 => 'App\\Providers\\Filament\\CookPanelProvider',
+    38 => 'App\\Providers\\Filament\\LessonsAdminPanelProvider',
+    39 => 'App\\Providers\\Filament\\KitchenAdminPanelProvider',
+    40 => 'App\\Providers\\Filament\\StudentPanelProvider',
+    41 => 'App\\Providers\\Filament\\CookPanelProvider',
   ),
   'deferred' => 
   array (
