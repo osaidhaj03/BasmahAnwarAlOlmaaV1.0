@@ -4,18 +4,19 @@ namespace App\Filament\Resources\KitchenInvoices\Tables;
 
 use AlperenErsoy\FilamentExport\Actions\FilamentExportBulkAction;
 use AlperenErsoy\FilamentExport\Actions\FilamentExportHeaderAction;
+use App\Support\KitchenBillingPeriod;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Filament\Actions\BulkAction;
-use Filament\Notifications\Notification;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class KitchenInvoicesTable
@@ -62,15 +63,15 @@ class KitchenInvoicesTable
                 TextColumn::make('status')
                     ->label('الحالة')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => match($state) {
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
                         'pending' => 'قيد الانتظار',
                         'paid' => 'مدفوعة',
-                        'partial' => 'مدفوعة جزئياً',
+                        'partial' => 'مدفوعة جزئيا',
                         'overdue' => 'متأخرة',
                         'cancelled' => 'ملغاة',
                         default => $state,
                     })
-                    ->color(fn (string $state): string => match($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
                         'paid' => 'success',
                         'partial' => 'info',
@@ -87,43 +88,37 @@ class KitchenInvoicesTable
             ->filters([
                 Filter::make('billing_period')
                     ->form([
-                        DatePicker::make('from')
-                            ->label('من تاريخ')
-                            ->placeholder('اختر بداية الفترة')
-                            ->native(false)
-                            ->displayFormat('Y-m-d'),
-                        DatePicker::make('to')
-                            ->label('إلى تاريخ')
-                            ->placeholder('اختر نهاية الفترة')
-                            ->native(false)
-                            ->displayFormat('Y-m-d'),
+                        Select::make('month')
+                            ->label('فترة الفاتورة')
+                            ->options(KitchenBillingPeriod::options())
+                            ->default(KitchenBillingPeriod::currentMonth())
+                            ->searchable()
+                            ->native(false),
                     ])
-                    ->columns(2)
                     ->indicateUsing(function (array $data): ?string {
-                        if (!$data['from'] && !$data['to']) {
+                        if (empty($data['month'])) {
                             return null;
                         }
 
-                        $from = $data['from'] ? Carbon::parse($data['from'])->format('Y-m-d') : 'البداية';
-                        $to = $data['to'] ? Carbon::parse($data['to'])->format('Y-m-d') : 'الآن';
-
-                        return "فترة الفاتورة: {$from} - {$to}";
+                        return 'فترة الفاتورة: ' . KitchenBillingPeriod::label($data['month']);
                     })
                     ->query(function ($query, array $data) {
-                        if (!empty($data['from'])) {
-                            $query->whereDate('billing_date', '>=', $data['from']);
+                        if (empty($data['month'])) {
+                            return;
                         }
 
-                        if (!empty($data['to'])) {
-                            $query->whereDate('billing_date', '<=', $data['to']);
-                        }
+                        [$start, $end] = KitchenBillingPeriod::boundsFromMonth($data['month']);
+
+                        $query
+                            ->whereDate('billing_date', '>=', $start->toDateString())
+                            ->whereDate('billing_date', '<', $end->toDateString());
                     }),
                 SelectFilter::make('status')
                     ->label('الحالة')
                     ->options([
                         'pending' => 'قيد الانتظار',
                         'paid' => 'مدفوعة',
-                        'partial' => 'مدفوعة جزئياً',
+                        'partial' => 'مدفوعة جزئيا',
                         'overdue' => 'متأخرة',
                         'cancelled' => 'ملغاة',
                     ]),
@@ -134,16 +129,18 @@ class KitchenInvoicesTable
                     ->modalWidth('7xl'),
                 DeleteAction::make()
                     ->before(function ($record, DeleteAction $action) {
-                        if ($record->allocations()->exists()) {
-                            Notification::make()
-                                ->title('لا يمكن حذف الفاتورة')
-                                ->body('هذه الفاتورة مرتبطة بسند قبض. يرجى حذف سند القبض أولاً قبل حذف الفاتورة.')
-                                ->danger()
-                                ->persistent()
-                                ->send();
-                            
-                            $action->cancel();
+                        if (! $record->allocations()->exists()) {
+                            return;
                         }
+
+                        Notification::make()
+                            ->title('لا يمكن حذف الفاتورة')
+                            ->body('هذه الفاتورة مرتبطة بسند قبض. يرجى حذف سند القبض أولا قبل حذف الفاتورة.')
+                            ->danger()
+                            ->persistent()
+                            ->send();
+
+                        $action->cancel();
                     }),
             ])
             ->headerActions([
@@ -159,7 +156,7 @@ class KitchenInvoicesTable
                         ->label('تغيير القيمة')
                         ->icon('heroicon-o-currency-dollar')
                         ->form([
-                            \Filament\Forms\Components\TextInput::make('new_amount')
+                            TextInput::make('new_amount')
                                 ->label('القيمة الجديدة (JOD)')
                                 ->numeric()
                                 ->required()
@@ -170,8 +167,8 @@ class KitchenInvoicesTable
                                 $record->update(['amount' => $data['new_amount']]);
                                 $record->updatePaymentStatus();
                             });
-                            
-                            \Filament\Notifications\Notification::make()
+
+                            Notification::make()
                                 ->title('تم التعديل بنجاح')
                                 ->body('تم تغيير قيمة ' . $records->count() . ' فاتورة/فواتير.')
                                 ->success()
@@ -183,6 +180,7 @@ class KitchenInvoicesTable
                         ->icon('heroicon-o-calculator')
                         ->action(function (Collection $records) {
                             $total = $records->sum('amount');
+
                             Notification::make()
                                 ->title('المجموع: ' . number_format($total, 2) . ' JOD')
                                 ->success()
@@ -193,17 +191,19 @@ class KitchenInvoicesTable
                     DeleteBulkAction::make()
                         ->before(function ($records, DeleteBulkAction $action) {
                             $hasPayments = $records->filter(fn ($record) => $record->allocations()->exists());
-                            
-                            if ($hasPayments->isNotEmpty()) {
-                                Notification::make()
-                                    ->title('لا يمكن حذف بعض الفواتير')
-                                    ->body('الفواتير التالية مرتبطة بسند قبض ولا يمكن حذفها: ' . $hasPayments->pluck('invoice_number')->join(', '))
-                                    ->danger()
-                                    ->persistent()
-                                    ->send();
-                                
-                                $action->cancel();
+
+                            if ($hasPayments->isEmpty()) {
+                                return;
                             }
+
+                            Notification::make()
+                                ->title('لا يمكن حذف بعض الفواتير')
+                                ->body('الفواتير التالية مرتبطة بسند قبض ولا يمكن حذفها: ' . $hasPayments->pluck('invoice_number')->join(', '))
+                                ->danger()
+                                ->persistent()
+                                ->send();
+
+                            $action->cancel();
                         }),
                     FilamentExportBulkAction::make('export')
                         ->label('تصدير المحدد')
@@ -215,4 +215,3 @@ class KitchenInvoicesTable
             ->defaultSort('billing_date', 'desc');
     }
 }
-

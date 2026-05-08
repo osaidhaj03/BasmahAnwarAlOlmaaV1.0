@@ -5,11 +5,14 @@ namespace App\Filament\Resources\KitchenInvoices\Pages;
 use App\Filament\Resources\KitchenInvoices\KitchenInvoiceResource;
 use App\Filament\Widgets\KitchenInvoicesSummaryWidget;
 use Filament\Actions\CreateAction;
+use Filament\Pages\Concerns\ExposesTableToWidgets;
 use Filament\Resources\Pages\ListRecords;
 use Livewire\Attributes\On;
 
 class ListKitchenInvoices extends ListRecords
 {
+    use ExposesTableToWidgets;
+
     protected static string $resource = KitchenInvoiceResource::class;
 
     protected function getHeaderActions(): array
@@ -33,6 +36,5 @@ class ListKitchenInvoices extends ListRecords
         // إعادة تحميل الجدول
     }
 }
-
 
 
