@@ -28,8 +28,7 @@ class KitchenInvoicesSummaryWidget extends BaseWidget
             ? $this->getCurrentPeriodQuery()
             : $this->getPageTableQuery();
 
-        $selectedMonth = data_get($this->tableFilters, 'billing_period.month', KitchenBillingPeriod::currentMonth());
-        $periodLabel = KitchenBillingPeriod::label($selectedMonth);
+        $periodLabel = KitchenBillingPeriod::labelFromFilterData(data_get($this->tableFilters, 'billing_period'));
 
         $totalInvoices = (clone $periodInvoices)->count();
         $paidInvoices = (clone $periodInvoices)->where('status', 'paid')->count();

@@ -25,41 +25,15 @@ class KitchenInvoicesTable
     {
         return $table
             ->columns([
-                TextColumn::make('invoice_number')
-                    ->label('رقم الفاتورة')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('user.name')
-                    ->label('المشترك')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('subscription.kitchen.name')
-                    ->label('المطبخ')
-                    ->searchable(),
-                TextColumn::make('amount')
-                    ->label('المبلغ المطلوب')
-                    ->money('JOD')
-                    ->sortable(),
-                TextColumn::make('billing_period')
-                    ->label('فترة الفاتورة')
-                    ->badge()
-                    ->color('primary'),
-                TextColumn::make('total_paid')
-                    ->label('المدفوع')
-                    ->money('JOD')
-                    ->color('success'),
-                TextColumn::make('remaining_amount')
-                    ->label('المتبقي')
-                    ->money('JOD')
-                    ->color(fn ($state) => $state > 0 ? 'danger' : 'success'),
-                TextColumn::make('billing_date')
-                    ->label('تاريخ الفوترة')
-                    ->date()
-                    ->sortable(),
-                TextColumn::make('due_date')
-                    ->label('تاريخ الاستحقاق')
-                    ->date()
-                    ->sortable(),
+                TextColumn::make('invoice_number')->label('رقم الفاتورة')->searchable()->sortable(),
+                TextColumn::make('user.name')->label('المشترك')->searchable()->sortable(),
+                TextColumn::make('subscription.kitchen.name')->label('المطبخ')->searchable(),
+                TextColumn::make('amount')->label('المبلغ المطلوب')->money('JOD')->sortable(),
+                TextColumn::make('billing_period')->label('فترة الفاتورة')->badge()->color('primary'),
+                TextColumn::make('total_paid')->label('المدفوع')->money('JOD')->color('success'),
+                TextColumn::make('remaining_amount')->label('المتبقي')->money('JOD')->color(fn ($state) => $state > 0 ? 'danger' : 'success'),
+                TextColumn::make('billing_date')->label('تاريخ الفوترة')->date()->sortable(),
+                TextColumn::make('due_date')->label('تاريخ الاستحقاق')->date()->sortable(),
                 TextColumn::make('status')
                     ->label('الحالة')
                     ->badge()
@@ -88,26 +62,31 @@ class KitchenInvoicesTable
             ->filters([
                 Filter::make('billing_period')
                     ->form([
-                        Select::make('month')
-                            ->label('فترة الفاتورة')
-                            ->options(KitchenBillingPeriod::options())
-                            ->default(KitchenBillingPeriod::currentMonth())
+                        Select::make('month_number')
+                            ->label('الشهر')
+                            ->options(KitchenBillingPeriod::monthOptions())
+                            ->default(KitchenBillingPeriod::currentMonthNumber())
+                            ->required()
+                            ->searchable()
+                            ->native(false),
+                        Select::make('year')
+                            ->label('السنة')
+                            ->options(KitchenBillingPeriod::yearOptions())
+                            ->default(KitchenBillingPeriod::currentYear())
+                            ->required()
                             ->searchable()
                             ->native(false),
                     ])
-                    ->indicateUsing(function (array $data): ?string {
-                        if (empty($data['month'])) {
-                            return null;
-                        }
-
-                        return 'فترة الفاتورة: ' . KitchenBillingPeriod::label($data['month']);
-                    })
+                    ->columns(2)
+                    ->indicateUsing(fn (array $data): ?string => empty($data['month_number']) && empty($data['year']) && empty($data['month']) && empty($data['from']) && empty($data['to'])
+                        ? null
+                        : 'فترة الفاتورة: ' . KitchenBillingPeriod::labelFromFilterData($data))
                     ->query(function ($query, array $data) {
-                        if (empty($data['month'])) {
+                        if (empty($data['month_number']) && empty($data['year']) && empty($data['month']) && empty($data['from']) && empty($data['to'])) {
                             return;
                         }
 
-                        [$start, $end] = KitchenBillingPeriod::boundsFromMonth($data['month']);
+                        [$start, $end] = KitchenBillingPeriod::boundsFromFilterData($data);
 
                         $query
                             ->whereDate('billing_date', '>=', $start->toDateString())
@@ -124,9 +103,7 @@ class KitchenInvoicesTable
                     ]),
             ])
             ->recordActions([
-                EditAction::make()
-                    ->modal()
-                    ->modalWidth('7xl'),
+                EditAction::make()->modal()->modalWidth('7xl'),
                 DeleteAction::make()
                     ->before(function ($record, DeleteAction $action) {
                         if (! $record->allocations()->exists()) {
@@ -179,10 +156,8 @@ class KitchenInvoicesTable
                         ->label('حساب المجموع')
                         ->icon('heroicon-o-calculator')
                         ->action(function (Collection $records) {
-                            $total = $records->sum('amount');
-
                             Notification::make()
-                                ->title('المجموع: ' . number_format($total, 2) . ' JOD')
+                                ->title('المجموع: ' . number_format($records->sum('amount'), 2) . ' JOD')
                                 ->success()
                                 ->persistent()
                                 ->send();
