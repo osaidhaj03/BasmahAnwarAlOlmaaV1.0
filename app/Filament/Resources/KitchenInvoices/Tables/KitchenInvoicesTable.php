@@ -7,11 +7,11 @@ use AlperenErsoy\FilamentExport\Actions\FilamentExportHeaderAction;
 use App\Models\KitchenPayment;
 use App\Models\PaymentInvoiceAllocation;
 use App\Support\KitchenBillingPeriod;
+use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -24,6 +24,31 @@ use Illuminate\Support\Collection;
 
 class KitchenInvoicesTable
 {
+    protected static function createInvoicePayment($invoice, float $amount, string $paymentMethod, ?string $notes = null): KitchenPayment
+    {
+        return DB::transaction(function () use ($invoice, $amount, $paymentMethod, $notes) {
+            $payment = KitchenPayment::create([
+                'invoice_id' => $invoice->id,
+                'subscription_id' => $invoice->subscription_id,
+                'amount' => $amount,
+                'payment_date' => now()->toDateString(),
+                'collected_by' => auth()->id(),
+                'payment_method' => $paymentMethod,
+                'notes' => $notes,
+            ]);
+
+            PaymentInvoiceAllocation::create([
+                'payment_id' => $payment->id,
+                'invoice_id' => $invoice->id,
+                'amount_allocated' => $amount,
+            ]);
+
+            $invoice->updatePaymentStatus();
+
+            return $payment;
+        });
+    }
+
     public static function configure(Table $table): Table
     {
         return $table
@@ -106,7 +131,119 @@ class KitchenInvoicesTable
                     ]),
             ])
             ->recordActions([
-                EditAction::make()->modal()->modalWidth('7xl'),
+                Action::make('manage_invoice')
+                    ->label('إدارة الفاتورة')
+                    ->icon('heroicon-o-pencil-square')
+                    ->modalHeading(fn ($record): string => 'إدارة الفاتورة ' . $record->invoice_number)
+                    ->modalSubmitActionLabel('تنفيذ')
+                    ->form([
+                        Select::make('action_type')
+                            ->label('العملية')
+                            ->options([
+                                'change_amount' => 'تغيير قيمة الفاتورة',
+                                'create_payment' => 'إنشاء دفعة',
+                                'delete' => 'حذف الفاتورة',
+                            ])
+                            ->default('create_payment')
+                            ->required()
+                            ->live()
+                            ->native(false),
+                        TextInput::make('new_amount')
+                            ->label('القيمة الجديدة (JOD)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->required(fn ($get): bool => $get('action_type') === 'change_amount')
+                            ->visible(fn ($get): bool => $get('action_type') === 'change_amount'),
+                        Select::make('payment_type')
+                            ->label('نوع الدفع')
+                            ->options([
+                                'full' => 'دفع كامل',
+                                'custom' => 'مبلغ محدد',
+                            ])
+                            ->default('full')
+                            ->required(fn ($get): bool => $get('action_type') === 'create_payment')
+                            ->visible(fn ($get): bool => $get('action_type') === 'create_payment')
+                            ->live()
+                            ->native(false),
+                        TextInput::make('payment_amount')
+                            ->label('قيمة الدفعة (JOD)')
+                            ->numeric()
+                            ->minValue(0.01)
+                            ->required(fn ($get): bool => $get('action_type') === 'create_payment' && $get('payment_type') === 'custom')
+                            ->visible(fn ($get): bool => $get('action_type') === 'create_payment' && $get('payment_type') === 'custom'),
+                        Select::make('payment_method')
+                            ->label('طريقة الدفع')
+                            ->options(KitchenPayment::PAYMENT_METHODS)
+                            ->default('cash')
+                            ->required(fn ($get): bool => $get('action_type') === 'create_payment')
+                            ->visible(fn ($get): bool => $get('action_type') === 'create_payment')
+                            ->native(false),
+                        TextInput::make('notes')
+                            ->label('ملاحظات')
+                            ->maxLength(65535)
+                            ->visible(fn ($get): bool => $get('action_type') === 'create_payment'),
+                    ])
+                    ->action(function ($record, array $data) {
+                        if ($data['action_type'] === 'change_amount') {
+                            $record->update(['amount' => $data['new_amount']]);
+                            $record->updatePaymentStatus();
+
+                            Notification::make()
+                                ->title('تم تغيير قيمة الفاتورة')
+                                ->success()
+                                ->send();
+
+                            return;
+                        }
+
+                        if ($data['action_type'] === 'delete') {
+                            if ($record->allocations()->exists()) {
+                                Notification::make()
+                                    ->title('لا يمكن حذف الفاتورة')
+                                    ->body('هذه الفاتورة مرتبطة بسند قبض. يرجى حذف سند القبض أولا قبل حذف الفاتورة.')
+                                    ->danger()
+                                    ->persistent()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $record->delete();
+
+                            Notification::make()
+                                ->title('تم حذف الفاتورة')
+                                ->success()
+                                ->send();
+
+                            return;
+                        }
+
+                        $record->refresh();
+                        $remainingAmount = round((float) $record->remaining_amount, 2);
+
+                        if ($record->status === 'cancelled' || $remainingAmount <= 0) {
+                            Notification::make()
+                                ->title('لم يتم إنشاء الدفعة')
+                                ->body('الفاتورة مدفوعة أو ملغاة أو لا يوجد عليها مبلغ متبق.')
+                                ->warning()
+                                ->send();
+
+                            return;
+                        }
+
+                        $paymentAmount = $data['payment_type'] === 'full'
+                            ? $remainingAmount
+                            : min(round((float) $data['payment_amount'], 2), $remainingAmount);
+
+                        static::createInvoicePayment($record, $paymentAmount, $data['payment_method'], $data['notes'] ?? null);
+
+                        Notification::make()
+                            ->title('تم إنشاء الدفعة بنجاح')
+                            ->body('تم إنشاء دفعة بقيمة ' . number_format($paymentAmount, 2) . ' JOD.')
+                            ->success()
+                            ->send();
+                    })
+                    ->modalWidth('lg'),
                 DeleteAction::make()
                     ->before(function ($record, DeleteAction $action) {
                         if (! $record->allocations()->exists()) {
@@ -123,6 +260,7 @@ class KitchenInvoicesTable
                         $action->cancel();
                     }),
             ])
+            ->recordAction('manage_invoice')
             ->headerActions([
                 FilamentExportHeaderAction::make('export')
                     ->label('تصدير')
@@ -187,23 +325,7 @@ class KitchenInvoicesTable
                                         return;
                                     }
 
-                                    $payment = KitchenPayment::create([
-                                        'invoice_id' => $record->id,
-                                        'subscription_id' => $record->subscription_id,
-                                        'amount' => $paymentAmount,
-                                        'payment_date' => now()->toDateString(),
-                                        'collected_by' => auth()->id(),
-                                        'payment_method' => $data['payment_method'],
-                                        'notes' => $data['notes'] ?? null,
-                                    ]);
-
-                                    PaymentInvoiceAllocation::create([
-                                        'payment_id' => $payment->id,
-                                        'invoice_id' => $record->id,
-                                        'amount_allocated' => $paymentAmount,
-                                    ]);
-
-                                    $record->updatePaymentStatus();
+                                    static::createInvoicePayment($record, $paymentAmount, $data['payment_method'], $data['notes'] ?? null);
 
                                     $createdCount++;
                                     $totalPaid += $paymentAmount;
