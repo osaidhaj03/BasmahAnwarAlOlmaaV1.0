@@ -4,6 +4,8 @@ namespace App\Filament\Resources\KitchenInvoices\Tables;
 
 use AlperenErsoy\FilamentExport\Actions\FilamentExportBulkAction;
 use AlperenErsoy\FilamentExport\Actions\FilamentExportHeaderAction;
+use App\Models\KitchenPayment;
+use App\Models\PaymentInvoiceAllocation;
 use App\Support\KitchenBillingPeriod;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -17,6 +19,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 
 class KitchenInvoicesTable
@@ -129,6 +132,107 @@ class KitchenInvoicesTable
             ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    BulkAction::make('create_payments')
+                        ->label('إنشاء دفعات للفواتير')
+                        ->icon('heroicon-o-banknotes')
+                        ->form([
+                            Select::make('payment_type')
+                                ->label('نوع الدفع')
+                                ->options([
+                                    'full' => 'دفع كامل لكل فاتورة',
+                                    'custom' => 'مبلغ محدد لكل فاتورة',
+                                ])
+                                ->default('full')
+                                ->required()
+                                ->live()
+                                ->native(false),
+                            TextInput::make('amount')
+                                ->label('قيمة الدفعة لكل فاتورة (JOD)')
+                                ->numeric()
+                                ->minValue(0.01)
+                                ->required(fn ($get): bool => $get('payment_type') === 'custom')
+                                ->visible(fn ($get): bool => $get('payment_type') === 'custom'),
+                            Select::make('payment_method')
+                                ->label('طريقة الدفع')
+                                ->options(KitchenPayment::PAYMENT_METHODS)
+                                ->default('cash')
+                                ->required()
+                                ->native(false),
+                            TextInput::make('notes')
+                                ->label('ملاحظات')
+                                ->maxLength(65535),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $createdCount = 0;
+                            $skippedInvoices = [];
+                            $totalPaid = 0;
+
+                            DB::transaction(function () use ($records, $data, &$createdCount, &$skippedInvoices, &$totalPaid) {
+                                $records->each(function ($record) use ($data, &$createdCount, &$skippedInvoices, &$totalPaid) {
+                                    $record->refresh();
+
+                                    $remainingAmount = round((float) $record->remaining_amount, 2);
+
+                                    if ($record->status === 'cancelled' || $remainingAmount <= 0) {
+                                        $skippedInvoices[] = $record->invoice_number;
+                                        return;
+                                    }
+
+                                    $paymentAmount = $data['payment_type'] === 'full'
+                                        ? $remainingAmount
+                                        : min(round((float) $data['amount'], 2), $remainingAmount);
+
+                                    if ($paymentAmount <= 0) {
+                                        $skippedInvoices[] = $record->invoice_number;
+                                        return;
+                                    }
+
+                                    $payment = KitchenPayment::create([
+                                        'invoice_id' => $record->id,
+                                        'subscription_id' => $record->subscription_id,
+                                        'amount' => $paymentAmount,
+                                        'payment_date' => now()->toDateString(),
+                                        'collected_by' => auth()->id(),
+                                        'payment_method' => $data['payment_method'],
+                                        'notes' => $data['notes'] ?? null,
+                                    ]);
+
+                                    PaymentInvoiceAllocation::create([
+                                        'payment_id' => $payment->id,
+                                        'invoice_id' => $record->id,
+                                        'amount_allocated' => $paymentAmount,
+                                    ]);
+
+                                    $record->updatePaymentStatus();
+
+                                    $createdCount++;
+                                    $totalPaid += $paymentAmount;
+                                });
+                            });
+
+                            if ($createdCount === 0) {
+                                Notification::make()
+                                    ->title('لم يتم إنشاء أي دفعة')
+                                    ->body('كل الفواتير المحددة مدفوعة أو ملغاة أو لا يوجد عليها مبلغ متبق.')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $body = 'تم إنشاء ' . $createdCount . ' دفعة بإجمالي ' . number_format($totalPaid, 2) . ' JOD.';
+
+                            if (! empty($skippedInvoices)) {
+                                $body .= ' تم تخطي: ' . collect($skippedInvoices)->join(', ');
+                            }
+
+                            Notification::make()
+                                ->title('تم إنشاء الدفعات بنجاح')
+                                ->body($body)
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     BulkAction::make('change_amount')
                         ->label('تغيير القيمة')
                         ->icon('heroicon-o-currency-dollar')
