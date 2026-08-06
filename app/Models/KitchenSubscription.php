@@ -50,7 +50,7 @@ class KitchenSubscription extends Model
 
         static::saving(function ($subscription) {
             $hasAnotherSubscription = static::where('user_id', $subscription->user_id)
-                ->when($subscription->exists, fn ($query) => $query->whereKeyNot($subscription->getKey()))
+                ->when($subscription->exists, fn ($query) => $query->where('id', '!=', $subscription->getKey()))
                 ->exists();
 
             if ($hasAnotherSubscription) {

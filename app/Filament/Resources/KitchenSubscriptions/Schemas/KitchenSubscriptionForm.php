@@ -41,7 +41,7 @@ class KitchenSubscriptionForm
                                         $record,
                                         fn ($query) => $query->where(function ($query) use ($record) {
                                             $query->whereDoesntHave('kitchenSubscriptions')
-                                                ->orWhereKey($record->user_id);
+                                                ->orWhere('id', $record->user_id);
                                         }),
                                         fn ($query) => $query->whereDoesntHave('kitchenSubscriptions')
                                     )
@@ -94,7 +94,7 @@ class KitchenSubscriptionForm
                             ->rules([
                                 fn (callable $get) => function (string $attribute, $value, \Closure $fail) use ($get) {
                                     $recordId = $get('id'); // قد يكون null في حالة الإضافة
-                                    if (KitchenSubscription::where('user_id', $value)->when($recordId, fn ($query) => $query->whereKeyNot($recordId))->exists()) {
+                                    if (KitchenSubscription::where('user_id', $value)->when($recordId, fn ($query) => $query->where('id', '!=', $recordId))->exists()) {
                                         $fail('هذا المشترك لديه اشتراك فعال حالياً. لا يمكن إضافة اشتراك فعال آخر.');
                                     }
                                 },
