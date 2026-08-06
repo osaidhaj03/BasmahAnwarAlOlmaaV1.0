@@ -149,7 +149,6 @@ class UserForm
                         TextInput::make('email')
                             ->label('البريد الإلكتروني')
                             ->email()
-                            ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
                         
@@ -161,7 +160,6 @@ class UserForm
                         TextInput::make('password')
                             ->label('كلمة المرور')
                             ->password()
-                            ->required(fn (string $context): bool => $context === 'create')
                             ->minLength(8)
                             ->same('passwordConfirmation')
                             ->dehydrated(fn ($state): bool => filled($state)),
@@ -169,7 +167,6 @@ class UserForm
                         TextInput::make('passwordConfirmation')
                             ->label('تأكيد كلمة المرور')
                             ->password()
-                            ->required(fn (string $context): bool => $context === 'create')
                             ->dehydrated(false),
                         
                         Select::make('is_active')

@@ -6,6 +6,8 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -66,10 +68,36 @@ class KitchenSubscriptionsTable
                 //
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->modal(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('activate_subscription')
+                        ->label('تفعيل الاشتراك')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->update(['status' => 'active'])),
+                    BulkAction::make('change_monthly_price')
+                        ->label('تعديل قيمة الاشتراك')
+                        ->icon('heroicon-o-currency-dollar')
+                        ->form([
+                            TextInput::make('monthly_price')
+                                ->label('قيمة الاشتراك الجديدة')
+                                ->numeric()
+                                ->required()
+                                ->minValue(0),
+                        ])
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
+                            $records->each->update(['monthly_price' => $data['monthly_price']]);
+
+                            Notification::make()
+                                ->title('تم تعديل قيمة الاشتراك بنجاح')
+                                ->body('تم تعديل قيمة ' . $records->count() . ' اشتراك/اشتراكات.')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     BulkAction::make('pause_subscription')
                         ->label('إيقاف الاشتراك')
                         ->icon('heroicon-o-pause')

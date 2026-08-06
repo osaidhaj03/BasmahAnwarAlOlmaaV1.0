@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Validation\ValidationException;
 
 class KitchenSubscription extends Model
 {
@@ -44,6 +45,18 @@ class KitchenSubscription extends Model
             
             if ($user && $customerRole && !$user->hasRole('customer')) {
                 $user->roles()->attach($customerRole);
+            }
+        });
+
+        static::saving(function ($subscription) {
+            $hasAnotherSubscription = static::where('user_id', $subscription->user_id)
+                ->when($subscription->exists, fn ($query) => $query->whereKeyNot($subscription->getKey()))
+                ->exists();
+
+            if ($hasAnotherSubscription) {
+                throw ValidationException::withMessages([
+                    'user_id' => 'هذا المشترك لديه اشتراك مسبقاً. لا يمكن إضافة أكثر من اشتراك لنفس المستخدم.',
+                ]);
             }
         });
     }

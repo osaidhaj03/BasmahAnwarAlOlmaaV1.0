@@ -4,6 +4,7 @@ namespace App\Filament\Resources\KitchenSubscriptions\Schemas;
 
 use App\Models\Kitchen;
 use App\Models\KitchenSubscription;
+use App\Models\Role;
 use App\Models\User;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -12,6 +13,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Str;
 
 class KitchenSubscriptionForm
 {
@@ -33,14 +35,66 @@ class KitchenSubscriptionForm
                             ->helperText('رقم تلقائي بصيغة SUB-سنةشهر-رقم'),
                         Select::make('user_id')
                             ->label('المشترك')
-                            ->relationship('user', 'name')
+                            ->options(function (?KitchenSubscription $record) {
+                                return User::query()
+                                    ->when(
+                                        $record,
+                                        fn ($query) => $query->where(function ($query) use ($record) {
+                                            $query->whereDoesntHave('kitchenSubscriptions')
+                                                ->orWhereKey($record->user_id);
+                                        }),
+                                        fn ($query) => $query->whereDoesntHave('kitchenSubscriptions')
+                                    )
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id');
+                            })
                             ->searchable()
                             ->preload()
                             ->required()
+                            ->createOptionForm([
+                                TextInput::make('name')
+                                    ->label('اسم المشترك')
+                                    ->required()
+                                    ->maxLength(255),
+                                TextInput::make('phone')
+                                    ->label('رقم الهاتف')
+                                    ->tel()
+                                    ->maxLength(20),
+                                TextInput::make('email')
+                                    ->label('البريد الإلكتروني')
+                                    ->email()
+                                    ->unique(User::class, 'email')
+                                    ->maxLength(255)
+                                    ->helperText('اختياري. اتركه فارغًا إذا كان المشترك لا يحتاج وصول للويب.'),
+                                TextInput::make('password')
+                                    ->label('كلمة المرور')
+                                    ->password()
+                                    ->minLength(8)
+                                    ->dehydrated(fn ($state): bool => filled($state))
+                                    ->helperText('اختيارية. اتركها فارغة لإنشاء مشترك بدون حساب ويب.'),
+                            ])
+                            ->createOptionUsing(function (array $data): int {
+                                $hasWebAccount = filled($data['email'] ?? null) && filled($data['password'] ?? null);
+
+                                $user = User::create([
+                                    'name' => $data['name'],
+                                    'phone' => $data['phone'] ?? null,
+                                    'email' => $data['email'] ?: 'customer-' . Str::uuid() . '@no-login.local',
+                                    'password' => $data['password'] ?: Str::random(32),
+                                    'type' => 'student',
+                                    'is_active' => $hasWebAccount,
+                                ]);
+
+                                if ($customerRole = Role::where('slug', 'customer')->first()) {
+                                    $user->roles()->syncWithoutDetaching([$customerRole->id]);
+                                }
+
+                                return $user->id;
+                            })
                             ->rules([
                                 fn (callable $get) => function (string $attribute, $value, \Closure $fail) use ($get) {
                                     $recordId = $get('id'); // قد يكون null في حالة الإضافة
-                                    if (KitchenSubscription::hasActiveSubscription($value, $recordId) && $get('status') === 'active') {
+                                    if (KitchenSubscription::where('user_id', $value)->when($recordId, fn ($query) => $query->whereKeyNot($recordId))->exists()) {
                                         $fail('هذا المشترك لديه اشتراك فعال حالياً. لا يمكن إضافة اشتراك فعال آخر.');
                                     }
                                 },
