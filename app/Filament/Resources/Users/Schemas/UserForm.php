@@ -30,6 +30,13 @@ class UserForm
                             ->maxLength(255)
                             ->columnSpan('full'),
 
+                        TextInput::make('username')
+                            ->label('اسم المستخدم')
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255)
+                            ->alphaDash()
+                            ->placeholder('username'),
+
                         Select::make('roles')
                             ->label('الأدوار')
                             ->relationship('roles', 'name')
@@ -152,6 +159,12 @@ class UserForm
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
                         
+                        Select::make('country_code')
+                            ->label('رمز الدولة')
+                            ->options(\App\Models\User::countryCodeOptions())
+                            ->searchable()
+                            ->default('+962'),
+
                         TextInput::make('phone')
                             ->label(' رقم الهاتف ')
                             ->tel()

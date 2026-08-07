@@ -56,6 +56,16 @@ class KitchenSubscriptionForm
                                     ->label('اسم المشترك')
                                     ->required()
                                     ->maxLength(255),
+                                TextInput::make('username')
+                                    ->label('اسم المستخدم')
+                                    ->unique(User::class, 'username')
+                                    ->maxLength(255)
+                                    ->alphaDash(),
+                                Select::make('country_code')
+                                    ->label('رمز الدولة')
+                                    ->options(User::countryCodeOptions())
+                                    ->searchable()
+                                    ->default('+962'),
                                 TextInput::make('phone')
                                     ->label('رقم الهاتف')
                                     ->tel()
@@ -74,11 +84,14 @@ class KitchenSubscriptionForm
                                     ->helperText('اختيارية. اتركها فارغة لإنشاء مشترك بدون حساب ويب.'),
                             ])
                             ->createOptionUsing(function (array $data): int {
-                                $hasWebAccount = filled($data['email'] ?? null) && filled($data['password'] ?? null);
+                                $hasWebAccount = filled($data['password'] ?? null)
+                                    && (filled($data['email'] ?? null) || filled($data['username'] ?? null) || filled($data['phone'] ?? null));
 
                                 $user = User::create([
                                     'name' => $data['name'],
-                                    'phone' => $data['phone'] ?? null,
+                                    'username' => $data['username'] ?? null,
+                                    'country_code' => $data['country_code'] ?? '+962',
+                                    'phone' => User::normalizePhoneNumber($data['phone'] ?? null),
                                     'email' => $data['email'] ?: 'customer-' . Str::uuid() . '@no-login.local',
                                     'password' => $data['password'] ?: Str::random(32),
                                     'type' => 'student',

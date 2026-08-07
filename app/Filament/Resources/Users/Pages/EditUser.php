@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Pages;
 
 use App\Filament\Resources\Users\UserResource;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
@@ -30,5 +31,13 @@ class EditUser extends EditRecord
         }
 
         return $actions;
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $data['country_code'] = $data['country_code'] ?? '+962';
+        $data['phone'] = User::normalizePhoneNumber($data['phone'] ?? null);
+
+        return $data;
     }
 }

@@ -30,7 +30,7 @@ class StudentPanelProvider extends PanelProvider
         return $panel
             ->id('student')
             ->path('student')
-            ->login()
+            ->login(\App\Filament\Student\Pages\Auth\Login::class)
             ->sidebarFullyCollapsibleOnDesktop()
             ->databaseNotifications()
             ->brandName('لوحة التحكم الخاصة بالطالب')

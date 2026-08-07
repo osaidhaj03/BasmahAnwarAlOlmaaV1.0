@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\KitchenSubscriptions;
 
-use App\Filament\Resources\KitchenSubscriptions\Pages\CreateKitchenSubscription;
-use App\Filament\Resources\KitchenSubscriptions\Pages\EditKitchenSubscription;
 use App\Filament\Resources\KitchenSubscriptions\Pages\ListKitchenSubscriptions;
 use App\Filament\Resources\KitchenSubscriptions\Schemas\KitchenSubscriptionForm;
 use App\Filament\Resources\KitchenSubscriptions\Tables\KitchenSubscriptionsTable;
@@ -58,8 +56,6 @@ class KitchenSubscriptionResource extends Resource
     {
         return [
             'index' => ListKitchenSubscriptions::route('/'),
-            'create' => CreateKitchenSubscription::route('/create'),
-            'edit' => EditKitchenSubscription::route('/{record}/edit'),
         ];
     }
 }

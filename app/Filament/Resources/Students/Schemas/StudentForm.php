@@ -97,6 +97,19 @@ class StudentForm
                             ->maxLength(255)
                             ->placeholder('student@example.com'),
                         
+                        TextInput::make('username')
+                            ->label('اسم المستخدم')
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255)
+                            ->alphaDash()
+                            ->placeholder('username'),
+
+                        Select::make('country_code')
+                            ->label('رمز الدولة')
+                            ->options(\App\Models\User::countryCodeOptions())
+                            ->searchable()
+                            ->default('+962'),
+
                         TextInput::make('phone')
                             ->label('رقم الهاتف')
                             ->tel()

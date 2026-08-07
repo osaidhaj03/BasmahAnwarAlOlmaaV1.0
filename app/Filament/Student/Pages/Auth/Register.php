@@ -98,6 +98,20 @@ class Register extends BaseRegister
                             ->unique(User::class, 'email')
                             ->maxLength(255),
 
+                        TextInput::make('username')
+                            ->label('اسم المستخدم')
+                            ->required()
+                            ->unique(User::class, 'username')
+                            ->maxLength(255)
+                            ->alphaDash(),
+
+                        Select::make('country_code')
+                            ->label('رمز الدولة')
+                            ->options(User::countryCodeOptions())
+                            ->searchable()
+                            ->default('+962')
+                            ->required(),
+
                         TextInput::make('phone')
                             ->label('رقم الهاتف')
                             ->placeholder('ادخل رقم الهاتف المربوط بالواتساب')
@@ -126,7 +140,9 @@ class Register extends BaseRegister
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'phone' => $data['phone'] ?? null,
+            'username' => $data['username'],
+            'country_code' => $data['country_code'] ?? '+962',
+            'phone' => User::normalizePhoneNumber($data['phone'] ?? null),
             'student_id' => $data['student_id'] ?? null,
             'academic_level' => $data['academic_level'] ?? null,
             'gender' => $data['gender'] ?? null,

@@ -18,9 +18,11 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
 
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
         'type',
+        'country_code',
         'kitchen_id',
         'phone',
         'student_id',
@@ -60,6 +62,11 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
 
     protected static function booted(): void
     {
+        static::saving(function (User $user) {
+            $user->phone = static::normalizePhoneNumber($user->phone);
+            $user->country_code = $user->country_code ?: '+962';
+        });
+
         static::creating(function (User $user) {
             // Force new registered users to be students unless explicitly set
             if (empty($user->type)) {
@@ -281,6 +288,31 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     public function getFullNameAttribute()
     {
         return $this->name;
+    }
+
+    public static function countryCodeOptions(): array
+    {
+        return [
+            '+962' => 'الأردن (+962)',
+            '+966' => 'السعودية (+966)',
+            '+970' => 'فلسطين (+970)',
+            '+971' => 'الإمارات (+971)',
+            '+965' => 'الكويت (+965)',
+            '+974' => 'قطر (+974)',
+            '+973' => 'البحرين (+973)',
+            '+968' => 'عمان (+968)',
+            '+20' => 'مصر (+20)',
+            '+90' => 'تركيا (+90)',
+        ];
+    }
+
+    public static function normalizePhoneNumber(?string $phone): ?string
+    {
+        if (blank($phone)) {
+            return null;
+        }
+
+        return preg_replace('/\D+/', '', $phone);
     }
 
     // Filament Avatar Support
