@@ -34,7 +34,7 @@ class LessonsAdminPanelProvider extends PanelProvider
         return $panel
             ->id('lessons-admin')
             ->path('lessons-admin')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\Login::class)
             ->sidebarFullyCollapsibleOnDesktop()
             ->databaseNotifications()
             ->brandName('Lessons Admin')

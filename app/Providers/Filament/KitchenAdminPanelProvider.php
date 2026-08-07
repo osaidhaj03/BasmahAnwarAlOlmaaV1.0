@@ -40,7 +40,7 @@ class KitchenAdminPanelProvider extends PanelProvider
         return $panel
             ->id('kitchen-admin')
             ->path('kitchen-admin')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\Login::class)
             ->sidebarFullyCollapsibleOnDesktop()
             ->databaseNotifications()
             ->brandName('Kitchen Admin')

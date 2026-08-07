@@ -42,7 +42,7 @@ class CookPanelProvider extends PanelProvider
         return $panel
             ->id('cook')
             ->path('cook')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\Login::class)
             ->sidebarFullyCollapsibleOnDesktop()
             ->databaseNotifications()
             ->brandName('لوحة التحكم الخاصة بالطباخ')
