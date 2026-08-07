@@ -28,7 +28,7 @@ class Login extends BaseLogin
     protected function getLoginFormComponent(): TextInput
     {
         return TextInput::make('login')
-            ->label('البريد الإلكتروني أو اسم المستخدم أو رقم الهاتف')
+            ->label('تسجيل الدخول: البريد الإلكتروني أو اسم المستخدم أو رقم الهاتف')
             ->required()
             ->autocomplete()
             ->autofocus()
