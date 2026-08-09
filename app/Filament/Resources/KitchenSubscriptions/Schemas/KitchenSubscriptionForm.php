@@ -92,8 +92,8 @@ class KitchenSubscriptionForm
                                     'username' => $data['username'] ?? null,
                                     'country_code' => $data['country_code'] ?? '+962',
                                     'phone' => User::normalizePhoneNumber($data['phone'] ?? null),
-                                    'email' => $data['email'] ?: 'customer-' . Str::uuid() . '@no-login.local',
-                                    'password' => $data['password'] ?: Str::random(32),
+                                    'email' => $data['email'] ?? 'customer-' . Str::uuid() . '@no-login.local',
+                                    'password' => $data['password'] ?? Str::random(32),
                                     'type' => 'student',
                                     'is_active' => $hasWebAccount,
                                 ]);

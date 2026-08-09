@@ -16,8 +16,8 @@ class CreateUser extends CreateRecord
         $hasWebAccount = filled($data['password'] ?? null)
             && (filled($data['email'] ?? null) || filled($data['username'] ?? null) || filled($data['phone'] ?? null));
 
-        $data['email'] = $data['email'] ?: 'user-' . Str::uuid() . '@no-login.local';
-        $data['password'] = $data['password'] ?: Str::random(32);
+        $data['email'] = $data['email'] ?? 'user-' . Str::uuid() . '@no-login.local';
+        $data['password'] = $data['password'] ?? Str::random(32);
         $data['country_code'] = $data['country_code'] ?? '+962';
         $data['phone'] = User::normalizePhoneNumber($data['phone'] ?? null);
         $data['is_active'] = $hasWebAccount ? ($data['is_active'] ?? true) : false;
